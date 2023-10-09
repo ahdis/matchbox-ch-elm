@@ -55,4 +55,4 @@ jobs:
             --push \
             --platform=linux/arm64,linux/amd64 \
             -f ./Dockerfile \
-            matchbox-ch-elm
+            .
