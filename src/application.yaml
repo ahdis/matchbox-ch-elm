@@ -35,11 +35,15 @@ hapi:
         version: current
       elm:
         name: ch.fhir.ig.ch-elm
-        version: 1.0.0-trialuse
+        version: 1.0.0
         url: https://fhir.ch/ig/ch-elm/package.tgz
 matchbox:
   fhir:
     context:
-      igsPreloaded: ch.fhir.ig.ch-elm#1.0.0-trialuse
+      igsPreloaded: ch.fhir.ig.ch-elm#1.0.0
 #      txServer: n/a
       txServer: http://tx.fhir.org
+logging:
+  level:
+    root: error
+    ch.ahdis.fhir.hapi.jpa.validation: error
