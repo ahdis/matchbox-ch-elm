@@ -1,7 +1,7 @@
 server:
   port: 8080
   servlet:
-    context-path: /matchbox
+    context-path: /matchboxv3
 hapi:
   fhir:
     implementationguides:
@@ -33,10 +33,10 @@ hapi:
         url: file:/ch.fhir.ig.ch-lab-report-current.tgz
         name: ch.fhir.ig.ch-lab-report
         version: current
-      elm:
+      chelm:
         name: ch.fhir.ig.ch-elm
         version: 1.0.0
-        url: https://fhir.ch/ig/ch-elm/package.tgz
+        url: file:/ch.fhir.ig.ch-elm-1.0.0.tgz
 matchbox:
   fhir:
     context:
@@ -45,5 +45,4 @@ matchbox:
       txServer: http://tx.fhir.org
 logging:
   level:
-    root: error
     ch.ahdis.fhir.hapi.jpa.validation: error
