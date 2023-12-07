@@ -41,8 +41,8 @@ matchbox:
   fhir:
     context:
       igsPreloaded: ch.fhir.ig.ch-elm#1.0.0
-#      txServer: n/a
-      txServer: http://tx.fhir.org
+      #txServer: n/a
+      txServer: http://localhost:8080/matchboxv3/fhir
 logging:
   level:
     ch.ahdis.fhir.hapi.jpa.validation: error
