@@ -43,6 +43,7 @@ matchbox:
       igsPreloaded: ch.fhir.ig.ch-elm#1.0.0
       #txServer: n/a
       txServer: http://localhost:8080/matchboxv3/fhir
+      httpReadOnly: true
 logging:
   level:
     ch.ahdis.fhir.hapi.jpa.validation: error
