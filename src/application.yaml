@@ -1,5 +1,5 @@
 server:
-  port: 8080
+  port: 80
   servlet:
     context-path: /matchboxv3
 hapi:
@@ -42,8 +42,9 @@ matchbox:
     context:
       igsPreloaded: ch.fhir.ig.ch-elm#1.0.0
       #txServer: n/a
-      txServer: http://localhost:8080/matchboxv3/fhir
+      txServer: http://localhost:${server.port}/matchboxv3/fhir
       httpReadOnly: true
 logging:
   level:
-    ch.ahdis.fhir.hapi.jpa.validation: error
+    ch.ahdis.fhir.hapi.jpa.validation: ERROR
+    ch.ahdis.matchbox.terminology: DEBUG

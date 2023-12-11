@@ -1,3 +1,9 @@
+1.0.4 - 2023/12/11
+- server port 80 due to internal terminology server
+
+1.0.3 - 2023/12/09
+- internal terminology server
+
 1.0.2 - 2023/11/24
 - ch-core current needed to be added
 - fixes also https://github.com/ahdis/ch-elm/issues/46
