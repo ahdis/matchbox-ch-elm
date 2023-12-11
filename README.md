@@ -15,6 +15,6 @@ http://localhost:8080/matchbox/
 ## Download image for google artifact registry
 
 ```
-docker pull europe-west6-docker.pkg.dev/ahdis-ch/ahdis/matchbox-ch-elm:v1.0.4
-docker run -d --name matchbox-ch-elm -p 8080:80  europe-west6-docker.pkg.dev/ahdis-ch/ahdis/matchbox-ch-elm:v1.0.4
+docker pull europe-west6-docker.pkg.dev/ahdis-ch/ahdis/matchbox-ch-elm:v1.0.5
+docker run -d --name matchbox-ch-elm -p 8080:80  europe-west6-docker.pkg.dev/ahdis-ch/ahdis/matchbox-ch-elm:v1.0.5
 ```

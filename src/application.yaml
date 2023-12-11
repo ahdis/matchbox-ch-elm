@@ -42,7 +42,7 @@ matchbox:
     context:
       igsPreloaded: ch.fhir.ig.ch-elm#1.0.0
       #txServer: n/a
-      txServer: http://localhost:${server.port}/matchboxv3/fhir
+      txServer: http://matchbox_validator:${server.port}/matchboxv3/fhir
       httpReadOnly: true
 logging:
   level:
