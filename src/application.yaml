@@ -44,6 +44,12 @@ matchbox:
       #txServer: n/a
       txServer: http://matchbox_validator:${server.port}/matchboxv3/fhir
       httpReadOnly: true
+      suppressWarnInfo:
+        hl7.fhir.r4.core#4.0.1:
+          - "Constraint failed: dom-6:"
+          - "regex:Entry '(.+)' isn't reachable by traversing forwards from the Composition"
+        ch.fhir.ig.ch-elm#1.0.0:
+          - "regex:Binding for path (.+) has no source, so can't be checked"
 logging:
   level:
     ch.ahdis.fhir.hapi.jpa.validation: ERROR
