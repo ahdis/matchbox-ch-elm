@@ -4,12 +4,12 @@ matchbox configured with ch-elm for validation
 ## Build container for matchbox configured with ch-elm
 
 ```
-docker build -t matchbox-ch-elm .
-docker run -d --name matchbox-ch-elm -p 8080:8080 matchbox-ch-elm
+docker build --progress=plain -t matchbox-ch-elm .
+docker run -d --name matchbox-ch-elm -p 8080:80 matchbox-ch-elm
 ```
 
 after startup matchbox will be available at
-http://localhost:8080/matchbox/
+http://localhost:8080/matchboxv3/
 
 
 ## Download image for google artifact registry

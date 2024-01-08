@@ -17,38 +17,22 @@ hapi:
         name: hl7.fhir.uv.extensions.r4
         version: 1.0.0
         url: classpath:/hl7.fhir.uv.extensions.r4#1.0.0.tgz
-      h7ips:
-        url: file:/hl7.fhir.uv.ips-current.tgz
-        name: hl7.fhir.uv.ips
-        version: current
-      fhir_eu_lab:
-        name: hl7.fhir.eu.laboratory
-        version: current
-        url: file:/hl7.fhir.eu.laboratory-current.tgz
-      ch_core:
-        name: ch.fhir.ig.ch-core
-        version: current
-        url: file:/ch.fhir.ig.ch-core-current.tgz
-      chlabreport:
-        url: file:/ch.fhir.ig.ch-lab-report-current.tgz
-        name: ch.fhir.ig.ch-lab-report
-        version: current
       chelm:
         name: ch.fhir.ig.ch-elm
-        version: 1.0.0
-        url: file:/ch.fhir.ig.ch-elm-1.0.0.tgz
+        version: 1.0.1
+        url: file:/ch.fhir.ig.ch-elm-1.0.1.tgz
 matchbox:
   fhir:
     context:
-      igsPreloaded: ch.fhir.ig.ch-elm#1.0.0
+      igsPreloaded: ch.fhir.ig.ch-elm#1.0.1
       #txServer: n/a
-      txServer: http://matchbox_validator:${server.port}/matchboxv3/fhir
+      txServer: http://localhost:${server.port}/matchboxv3/fhir
       httpReadOnly: true
       suppressWarnInfo:
         hl7.fhir.r4.core#4.0.1:
           - "Constraint failed: dom-6:"
           - "regex:Entry '(.+)' isn't reachable by traversing forwards from the Composition"
-        ch.fhir.ig.ch-elm#1.0.0:
+        ch.fhir.ig.ch-elm#1.0.1:
           - "regex:Binding for path (.+) has no source, so can't be checked"
 logging:
   level:
