@@ -19,12 +19,11 @@ hapi:
         url: classpath:/hl7.fhir.uv.extensions.r4#1.0.0.tgz
       chelm:
         name: ch.fhir.ig.ch-elm
-        version: 1.0.1
-        url: file:/ch.fhir.ig.ch-elm-1.0.1.tgz
+        version: 1.1.0
 matchbox:
   fhir:
     context:
-      igsPreloaded: ch.fhir.ig.ch-elm#1.0.1
+      igsPreloaded: ch.fhir.ig.ch-elm#1.1.0
       #txServer: n/a
       txServer: http://localhost:${server.port}/matchboxv3/fhir
       httpReadOnly: true
@@ -32,7 +31,7 @@ matchbox:
         hl7.fhir.r4.core#4.0.1:
           - "Constraint failed: dom-6:"
           - "regex:Entry '(.+)' isn't reachable by traversing forwards from the Composition"
-        ch.fhir.ig.ch-elm#1.0.1:
+        ch.fhir.ig.ch-elm#1.1.0:
           - "regex:Binding for path (.+) has no source, so can't be checked"
 logging:
   level:

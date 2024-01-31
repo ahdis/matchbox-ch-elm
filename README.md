@@ -6,6 +6,7 @@ matchbox configured with ch-elm for validation
 ```
 docker build --progress=plain -t matchbox-ch-elm .
 docker run -d --name matchbox-ch-elm -p 8080:80 matchbox-ch-elm
+docker logs matchbox-ch-elm --follow 
 ```
 
 after startup matchbox will be available at
@@ -15,6 +16,6 @@ http://localhost:8080/matchboxv3/
 ## Download image for google artifact registry
 
 ```
-docker pull europe-west6-docker.pkg.dev/ahdis-ch/ahdis/matchbox-ch-elm:v1.0.5
-docker run -d --name matchbox-ch-elm -p 8080:80  europe-west6-docker.pkg.dev/ahdis-ch/ahdis/matchbox-ch-elm:v1.0.5
+docker pull europe-west6-docker.pkg.dev/ahdis-ch/ahdis/matchbox-ch-elm:v1.1.0
+docker run -d --name matchbox-ch-elm -p 8080:80  europe-west6-docker.pkg.dev/ahdis-ch/ahdis/matchbox-ch-elm:v1.1.0
 ```
