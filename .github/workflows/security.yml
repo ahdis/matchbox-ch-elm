@@ -1,6 +1,3 @@
-# This workflow will build a Java project with Maven, and cache/restore any dependencies to improve the workflow execution time
-# For more information see: https://help.github.com/actions/language-and-framework-guides/building-and-testing-java-with-maven
-
 name: Security checks
 
 on:
@@ -13,7 +10,7 @@ on:
 
 jobs:
   test-trivy:
-    name: Analyze the Java code with Trivy
+    name: Analyze the Matchbox image with Trivy
     runs-on: ubuntu-latest
     permissions:
       actions: read
@@ -24,10 +21,18 @@ jobs:
       - name: Checkout the repository
         uses: actions/checkout@main
 
-      - name: Run Trivy vulnerability scanner in repo mode
+      # We will scan the Matchbox image used in the Dockerfile with Trivy.
+      # The Trivy scan is also enabled in Matchbox repository, but only for the latest version.
+      # If a new vulnerability is discovered in a previous release that is still used here, we will catch it.
+
+      - name: Extract the image name from the Dockerfile
+        run: echo "image_name=$(awk '/FROM ([a-zA-Z0-9\.\-/:]+)/ { print $2 }' Dockerfile)" >> "$GITHUB_ENV"
+
+      - name: Run Trivy vulnerability scanner in image mode
         uses: aquasecurity/trivy-action@master
         with:
-          scan-type: 'fs'
+          scan-type: 'image'
+          image-ref: ${{ env.image_name }}
           ignore-unfixed: true
           format: 'sarif'
           output: 'trivy-results.sarif'
