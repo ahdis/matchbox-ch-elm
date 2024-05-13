@@ -1,3 +1,7 @@
+1.2.2 - 2024/05/13
+- matchbox v3.8.3
+- ch-elm 1.2.0 package via package manager
+
 1.2.1 - 2024/04/23
 - matchbox v3.8.2
 - ch-elm 1.2.0 package
