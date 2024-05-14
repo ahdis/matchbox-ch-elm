@@ -1,3 +1,7 @@
+1.2.3 - 2024/05/14
+- matchbox v3.8.3-2
+- setting home paramter
+
 1.2.2 - 2024/05/13
 - matchbox v3.8.3
 - ch-elm 1.2.0 package via package manager

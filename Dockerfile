@@ -1,4 +1,4 @@
-FROM europe-west6-docker.pkg.dev/ahdis-ch/ahdis/matchbox:v3.8.3
+FROM europe-west6-docker.pkg.dev/ahdis-ch/ahdis/matchbox:v3.8.3-2
 
 USER root
 RUN mkdir -p /config && chown matchbox:matchbox /config
