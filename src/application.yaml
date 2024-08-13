@@ -17,17 +17,14 @@ hapi:
         name: hl7.fhir.uv.extensions.r4
         version: 1.0.0
         url: classpath:/hl7.fhir.uv.extensions.r4#1.0.0.tgz
-      lab_eu_report:
-        name: hl7.fhir.eu.laboratory
-        version: 0.1.0-ballot
-        url: https://hl7.eu/fhir/laboratory/0.1.0-ballot/package.tgz
       chelm:
         name: ch.fhir.ig.ch-elm
-        version: 1.3.1
+        version: 1.4.0-cibuild
+        url: file:/ch.fhir.ig.ch-elm.tgz
 matchbox:
   fhir:
     context:
-      igsPreloaded: ch.fhir.ig.ch-elm#1.3.1
+      igsPreloaded: ch.fhir.ig.ch-elm#1.4.0-cibuild
       #txServer: n/a
       txServer: http://localhost:${server.port}/matchboxv3/fhir
       httpReadOnly: true
@@ -37,7 +34,7 @@ matchbox:
           - "regex:Entry '(.+)' isn't reachable by traversing forwards from the Composition"
         ch.fhir.ig.ch-elm:
           - "regex:Binding for path (.+) has no source, so can't be checked"
-logging:
+          - "None of the codings provided are in the value set 'Observation Interpretation Codes' (.+)"
   level:
     ch.ahdis.fhir.hapi.jpa.validation: ERROR
     ch.ahdis.matchbox.terminology: DEBUG
