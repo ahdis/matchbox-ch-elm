@@ -19,12 +19,11 @@ hapi:
         url: classpath:/hl7.fhir.uv.extensions.r4#1.0.0.tgz
       chelm:
         name: ch.fhir.ig.ch-elm
-        version: 1.4.0-cibuild
-        url: file:/ch.fhir.ig.ch-elm.tgz
+        version: 1.4.0
 matchbox:
   fhir:
     context:
-      igsPreloaded: ch.fhir.ig.ch-elm#1.4.0-cibuild
+      igsPreloaded: ch.fhir.ig.ch-elm#1.4.0
       #txServer: n/a
       txServer: http://localhost:${server.port}/matchboxv3/fhir
       httpReadOnly: true
@@ -34,7 +33,8 @@ matchbox:
           - "regex:Entry '(.+)' isn't reachable by traversing forwards from the Composition"
         ch.fhir.ig.ch-elm:
           - "regex:Binding for path (.+) has no source, so can't be checked"
-          - "None of the codings provided are in the value set 'Observation Interpretation Codes' (.+)"
+          - "regex:None of the codings provided are in the value set 'Observation Interpretation Codes'(.*)"
+          - "regex:This element does not match any known slice defined in the profile http://hl7.eu/fhir/laboratory/StructureDefinition/Patient-eu-lab(.+)"          
   level:
     ch.ahdis.fhir.hapi.jpa.validation: ERROR
     ch.ahdis.matchbox.terminology: DEBUG

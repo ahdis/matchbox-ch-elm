@@ -1,3 +1,7 @@
+1.4.0 2024/08/20
+- matchbox v3.8.10
+- ch-elm 1.4.0-cibuild
+
 1.4.0-cibuild2 2024/08/13
 - matchbox v3.8.10
 - ch-elm 1.4.0-cibuild
