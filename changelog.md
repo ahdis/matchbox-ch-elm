@@ -1,3 +1,7 @@
+1.6.0 2024/10/31
+- matchbox v3.9.6
+- ch-elm 1.6.0
+
 1.6.0-cibuild-3 2024/10/24
 - matchbox v3.9.6
 - ch-elm 1.6.0-cibuild

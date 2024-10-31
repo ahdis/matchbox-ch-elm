@@ -19,12 +19,11 @@ hapi:
         url: classpath:/hl7.fhir.uv.extensions.r4#1.0.0.tgz
       chelm:
         name: ch.fhir.ig.ch-elm
-        version: 1.6.0-cibuild
-        url: file:/ch.fhir.ig.ch-elm.tgz
+        version: 1.6.0
 matchbox:
   fhir:
     context:
-      igsPreloaded: ch.fhir.ig.ch-elm#1.6.0-cibuild
+      igsPreloaded: ch.fhir.ig.ch-elm#1.6.0
       #txServer: n/a
       txServer: http://localhost:${server.port}/matchboxv3/fhir
       httpReadOnly: true
