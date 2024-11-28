@@ -19,8 +19,7 @@ hapi:
         url: classpath:/hl7.fhir.uv.extensions.r4#1.0.0.tgz
       chelm:
         name: ch.fhir.ig.ch-elm
-        version: 1.7.0-ci-build
-        url: file:/ch.fhir.ig.ch-elm.tgz
+        version: 1.7.0
 matchbox:
   fhir:
     context:
@@ -38,7 +37,7 @@ matchbox:
           - "regex:This element does not match any known slice defined in the profile http://hl7.eu/fhir/laboratory/StructureDefinition/Patient-eu-lab(.+)"    
           - "regex:This element does not match any known slice defined in the profile http://hl7.eu/fhir/laboratory/StructureDefinition/HumanName-eu(.+)"
           - "regex:Does not match slice '(.+)' (.+)"
-          - "regex:(.+)Unable to find a match for profile(.+)"
+          - "regex:(.*)Unable to find a match for profile(.+)"
           - "regex:(.+): Specified profile type was '(.+)' in profile '(.+)', but found type '(.+)"
   level:
     ch.ahdis.fhir.hapi.jpa.validation: ERROR
