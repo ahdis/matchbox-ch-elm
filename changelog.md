@@ -1,3 +1,7 @@
+1.7.1 2025/01/20
+- matchbox v3.9.8
+- ch-elm 1.7.0 (preloaded)
+
 1.7.0 2024/11/28
 - matchbox v3.9.8
 - ch-elm 1.7.0
