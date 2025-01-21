@@ -1,4 +1,8 @@
-1.7.2 2025/01/20
+1.8.0-cibuild 2025/01/21
+- matchbox v3.9.10
+- ch-elm 1.8.0-cibuild
+
+1.7.3 2025/01/20
 - matchbox v3.9.10
 - ch-elm 1.7.0
 
