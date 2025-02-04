@@ -23,7 +23,7 @@ hapi:
 matchbox:
   fhir:
     context:
-      igsPreloaded: ch.fhir.ig.ch-elm#1.8.0-cibuild
+      igsPreloaded: ch.fhir.ig.ch-elm#1.8.0
       #txServer: n/a
       txServer: http://localhost:${server.port}/matchboxv3/fhir
       httpReadOnly: true
