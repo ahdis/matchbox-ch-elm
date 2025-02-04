@@ -19,8 +19,7 @@ hapi:
         url: classpath:/hl7.fhir.uv.extensions.r4#1.0.0.tgz
       chelm:
         name: ch.fhir.ig.ch-elm
-        version: 1.8.0-cibuild
-        url: file:/ch.fhir.ig.ch-elm.tgz
+        version: 1.8.0
 matchbox:
   fhir:
     context:
@@ -37,6 +36,7 @@ matchbox:
           - "regex:None of the codings provided are in the value set 'Observation Interpretation Codes'(.*)"
           - "regex:This element does not match any known slice defined in the profile http://hl7.eu/fhir/laboratory/StructureDefinition/Patient-eu-lab(.+)"    
           - "regex:This element does not match any known slice defined in the profile http://hl7.eu/fhir/laboratory/StructureDefinition/HumanName-eu(.+)"
+          - "regex:This element does not match any known slice defined in the profile http://fhir.ch/ig/ch-core/StructureDefinition/ch-core-humanname(.+)"
           - "regex:Does not match slice '(.+)' (.+)"
           - "regex:(.*)Unable to find a match for profile(.+)"
           - "regex:(.+): Specified profile type was '(.+)' in profile '(.+)', but found type '(.+)"
