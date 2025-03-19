@@ -1,3 +1,7 @@
+1.9.0-4.0.0 2025/03/19
+- matchbox v4.0.0
+- ch.fhir.ig.ch-elm#1.9.0
+
 1.9.0 2025/03/18
 - matchbox v3.9.18
 - ch.fhir.ig.ch-elm#1.9.0
