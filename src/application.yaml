@@ -11,20 +11,20 @@ hapi:
         url: classpath:/hl7.fhir.r4.core.tgz
       fhir_terminology:
         name: hl7.terminology.r4
-        version: 6.2.0
-        url: classpath:/hl7.terminology.r4#6.2.0.tgz
+        version: 6.3.0
+        url: classpath:/hl7.terminology.r4#6.3.0.tgz
       fhir_extensions:
-        name: hl7.fhir.uv.extensions
-        version: 1.0.0
-        url: classpath:/hl7.fhir.uv.extensions#1.0.0.tgz
+        name: hl7.fhir.uv.extensions.r4
+        version: 5.2.0
+        url: classpath:/hl7.fhir.uv.extensions.r4#5.2.0.tgz
       chelm:
         name: ch.fhir.ig.ch-elm
-        version: 1.9.0
-#        url: file:/ch.fhir.ig.ch-elm.tgz
+        version: 1.10.0-cibuild
+        url: file:/ch.fhir.ig.ch-elm.tgz
 matchbox:
   fhir:
     context:
-      igsPreloaded: ch.fhir.ig.ch-elm#1.9.0
+      igsPreloaded: ch.fhir.ig.ch-elm#1.10.0-cibuild
       #txServer: n/a
       txServer: http://localhost:${server.port}/matchboxv3/fhir
       httpReadOnly: true
