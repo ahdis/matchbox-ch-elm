@@ -1,5 +1,5 @@
-1.10.0-cibuild 2025/06/18
-- matchbox v4.0.6
+1.10.0-cibuild 2025/06/20
+- matchbox v4.0.7
 - ch.fhir.ig.ch-elm#1.10.0-cibuild
 
 1.9.0-4.0.0 2025/03/19
