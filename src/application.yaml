@@ -27,6 +27,7 @@ matchbox:
       igsPreloaded: ch.fhir.ig.ch-elm#1.11.0
       #txServer: n/a
       txServer: http://localhost:${server.port}/matchboxv3/fhir
+      txServerCache: false
       httpReadOnly: true
       suppressWarnInfo:
         hl7.fhir.r4.core#4.0.1:

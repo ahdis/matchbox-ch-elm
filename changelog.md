@@ -1,3 +1,8 @@
+1.11.1 2025/08/22
+- matchbox v4.0.11
+- ch.fhir.ig.ch-elm#1.11.0
+- txServerCache: false
+
 1.11.0 2025/08/13
 - matchbox v4.0.11
 - ch.fhir.ig.ch-elm#1.11.0
