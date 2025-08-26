@@ -26,8 +26,8 @@ matchbox:
     context:
       igsPreloaded: ch.fhir.ig.ch-elm#1.11.0
       #txServer: n/a
-      txServer: http://localhost:${server.port}/matchboxv3/fhir
-      txServerCache: false
+      txServer: http://localhost:${server.port}/matchboxv3/tx
+      txUseEcosystem: false
       httpReadOnly: true
       suppressWarnInfo:
         hl7.fhir.r4.core#4.0.1:
@@ -42,6 +42,3 @@ matchbox:
           - "regex:Does not match slice '(.+)' (.+)"
           - "regex:(.*)Unable to find a match for profile(.+)"
           - "regex:(.+): Specified profile type was '(.+)' in profile '(.+)', but found type '(.+)"
-  level:
-    ch.ahdis.fhir.hapi.jpa.validation: ERROR
-    ch.ahdis.matchbox.terminology: DEBUG
