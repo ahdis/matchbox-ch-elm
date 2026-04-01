@@ -27,6 +27,8 @@ matchbox:
           - "regex:This element does not match any known slice defined in the profile http://hl7.eu/fhir/laboratory/StructureDefinition/Patient-eu-lab(.+)"    
           - "regex:This element does not match any known slice defined in the profile http://hl7.eu/fhir/laboratory/StructureDefinition/HumanName-eu(.+)"
           - "regex:This element does not match any known slice defined in the profile http://fhir.ch/ig/ch-core/StructureDefinition/ch-core-humanname(.+)"
+          - "regex:This element does not match any known slice defined in the profile http://hl7.eu/fhir/laboratory/StructureDefinition/Address-eu(.+)"
           - "regex:Does not match slice '(.+)' (.+)"
           - "regex:(.*)Unable to find a match for profile(.+)"
           - "regex:(.+): Specified profile type was '(.+)' in profile '(.+)', but found type '(.+)"
+          - "regex:Found multiple matching profiles for(.+)"
