@@ -1,3 +1,7 @@
+1.14.1 2026/05/27
+- matchbox v4.1.9
+- ch.fhir.ig.ch-elm#1.14.0
+
 1.14.0 2026/05/26
 - matchbox v4.1.8
 - ch.fhir.ig.ch-elm#1.14.0
