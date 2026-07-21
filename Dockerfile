@@ -10,7 +10,7 @@ USER root
 RUN apt update && apt upgrade -y
 
 # Remove the package management tools for security reasons
-RUN dpkg -r --force-all apt apt-get && dpkg -r --force-all debconf dpkg
+#RUN dpkg -r --force-all apt apt-get && dpkg -r --force-all debconf dpkg
 
 # Switch back to the matchbox user
 USER matchbox
