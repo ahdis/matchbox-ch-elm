@@ -14,6 +14,7 @@ matchbox:
     context:
       igsPreloaded: ch.fhir.ig.ch-elm#1.15.0
       #txServer: n/a
+      ssrfProtectionEnabled: false
       txServer: http://localhost:${server.port}/matchboxv3/tx
       txUseEcosystem: false
       httpReadOnly: true
