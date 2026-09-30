@@ -1,0 +1,3 @@
+# Claude Code: local settings and worktrees stay local, the project skills are shared
+.claude/*
+!.claude/skills/

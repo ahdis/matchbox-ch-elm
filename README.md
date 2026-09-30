@@ -4,12 +4,8 @@ matchbox configured with ch-elm for validation
 
 ## how to install a new ch-elm ig or matchbox version
 
-1. if ch-elm is updated download the published (or ci-build) package into src/ch.fhir.ig.ch-elm.tgz
-2. adjust the version in src/application.yaml
-3. update Dockerfile if there is a new matchbox version
-4. updated changelog.md with planned new release
-5. commit and push to main, make are release tag and push it to origin
-6. you get a message on zulip if matchbox-ch-elm is available in the registry
+See the release procedure in [`.claude/skills/release/SKILL.md`](.claude/skills/release/SKILL.md) (or ask Claude Code
+to make a release). You get a message on Zulip when the new matchbox-ch-elm image is available in the registry.
 
 ## Build container for matchbox configured with ch-elm
 
@@ -26,6 +22,6 @@ http://localhost:8080/matchboxv3/
 ## Download image for google artifact registry
 
 ```
-docker run -d --name matchbox-ch-elm -p 8080:80  europe-west6-docker.pkg.dev/ahdis-ch/ahdis/matchbox-ch-elm:1.13.0
+docker run -d --name matchbox-ch-elm -p 8080:80  europe-west6-docker.pkg.dev/ahdis-ch/ahdis/matchbox-ch-elm:1.15.4
 
 ```
