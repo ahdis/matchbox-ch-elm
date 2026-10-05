@@ -1,18 +1,19 @@
 ---
 name: release
-description: Make a new matchbox-ch-elm release (e.g. 1.15.4) - update the matchbox base image and/or the ch-elm IG package, add the changelog entry, commit and push the version tag, and follow the Docker image build. Use when the user asks to release, cut or publish a new matchbox-ch-elm version, e.g. for a new matchbox or ch-elm version.
+description: Make a new matchbox-ch-elm release (e.g. 1.15.4) - update the matchbox base image and/or the ch-elm IG package, add the changelog entry, commit and push, run the release workflow (tag and GitHub release) and follow the Docker image build. Use when the user asks to release, cut or publish a new matchbox-ch-elm version, e.g. for a new matchbox or ch-elm version.
 ---
 
 # Making a matchbox-ch-elm release
 
 A release is a new combination of a matchbox version (the `FROM` image in `Dockerfile`) and a ch-elm IG version
-(`src/ch.fhir.ig.ch-elm.tgz`). It's a commit on `main` named after the version and a tag with the bare version (no
-`v`). Pushing the tag starts `.github/workflows/googleregistry.yml`, which builds the image (amd64 and arm64), pushes it
-as `europe-west6-docker.pkg.dev/ahdis-ch/ahdis/matchbox-ch-elm:<tag>` and posts to Zulip. There is no PR and, since
-2024, no GitHub release.
+(`src/ch.fhir.ig.ch-elm.tgz`). It's a commit on `main` named after the version, then the `Create a release` workflow
+(`.github/workflows/release.yml`), which creates the tag with the bare version (no `v`) and the GitHub release with the
+notes of the version from `changelog.md` (a `-cibuild` version as a pre-release), and starts
+`.github/workflows/googleregistry.yml` on the tag. That builds the image (amd64 and arm64), pushes it as
+`europe-west6-docker.pkg.dev/ahdis-ch/ahdis/matchbox-ch-elm:<tag>` and posts to Zulip. There is no PR.
 
-The user asking for a release authorizes the whole procedure (commit and push to `main`, tag). Stop and ask if the
-version isn't obvious, if `main` has unexpected changes, or if the build fails. A pushed tag is published at once:
+The user asking for a release authorizes the whole procedure (commit and push to `main`, release workflow). Stop and
+ask if the version isn't obvious, if `main` has unexpected changes, or if a workflow fails. A tag is published at once:
 don't move or delete it, make a new patch release instead.
 
 ## 1. Check the state and pick the version
@@ -79,25 +80,30 @@ docker build --progress=plain -t matchbox-ch-elm .
 
 To try it: `docker run -d --name matchbox-ch-elm -p 8080:80 matchbox-ch-elm`, then http://localhost:8080/matchboxv3/.
 
-## 6. Commit, tag and push
+## 6. Commit, push and run the release workflow
 
 Commit only the release files, never `.DS_Store` (it's tracked and often modified). The commit message is the version:
 
 ```bash
 git add Dockerfile changelog.md README.md src/application.yaml src/ch.fhir.ig.ch-elm.tgz
 git commit -m "1.15.4"
-git tag 1.15.4
 git push origin main
-git push origin 1.15.4
+gh workflow run release.yml --repo ahdis/matchbox-ch-elm --ref main -f version=1.15.4
 ```
 
-## 7. Follow the build
+Don't tag by hand: the workflow checks that the version is the first entry of `changelog.md` and that the entry lists
+the matchbox version of the `Dockerfile` and the ch-elm version of the package (also preloaded in
+`src/application.yaml`), then creates the tag and the release. If it fails, fix `main` and run it again.
+
+## 7. Follow the release and the build
 
 ```bash
-gh run list --repo ahdis/matchbox-ch-elm --workflow googleregistry.yml --limit 1
+gh run list --repo ahdis/matchbox-ch-elm --limit 2               # 'Create a release', then the build on the tag
 gh run watch <id> --repo ahdis/matchbox-ch-elm --exit-status
+gh release view 1.15.4 --repo ahdis/matchbox-ch-elm
 docker manifest inspect europe-west6-docker.pkg.dev/ahdis-ch/ahdis/matchbox-ch-elm:1.15.4 > /dev/null && echo ok
 ```
 
-The build takes about 10–15 min. On success a message is posted to Zulip `#matchbox` (topic "new matchbox-ch-elm
-version published"), on failure to `#ahdis`. Report the version, its matchbox and ch-elm versions, and the image.
+The build takes about 10–20 min. On success a message is posted to Zulip `#matchbox` (topic "new matchbox-ch-elm
+version published", with the link to the release), on failure to `#ahdis`. Report the version, its matchbox and ch-elm
+versions, the release URL and the image.

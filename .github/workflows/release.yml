@@ -1,0 +1,99 @@
+name: Create a release
+
+# Creates the tag and the GitHub release for a version with the notes of that version from changelog.md, then starts
+# the Docker image workflow on the new tag.
+# A tag created with the GITHUB_TOKEN doesn't trigger the 'push: tags' workflows, so it's dispatched explicitly.
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Version to release (e.g. 1.15.6 or 1.16.0-cibuild2). Must be the first entry in changelog.md."
+        required: true
+        type: string
+
+permissions:
+  contents: write
+  actions: write
+
+jobs:
+  release:
+    name: Create the release
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout the repository
+        uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+
+      - name: Check the version
+        env:
+          VERSION: ${{ inputs.version }}
+        run: |
+          if ! [[ "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+(-cibuild[0-9]*)?$ ]]; then
+            echo "::error::The version '$VERSION' isn't of the form X.Y.Z or X.Y.Z-cibuildN"
+            exit 1
+          fi
+          if git rev-parse -q --verify "refs/tags/$VERSION" > /dev/null; then
+            echo "::error::The tag $VERSION already exists"
+            exit 1
+          fi
+          CHANGELOG_VERSION=$(awk 'NF { print $1; exit }' changelog.md)
+          if [ "$CHANGELOG_VERSION" != "$VERSION" ]; then
+            echo "::error::The first entry in changelog.md is $CHANGELOG_VERSION, not $VERSION"
+            exit 1
+          fi
+          # The changelog entry must match the matchbox image and the ch-elm package that get built
+          MATCHBOX=$(sed -n 's/^FROM .*matchbox:\(v[^ ]*\).*/\1/p' Dockerfile)
+          CHELM=$(tar -xOzf src/ch.fhir.ig.ch-elm.tgz package/package.json | jq -r .version)
+          ENTRY=$(awk 'NF == 0 { exit } { print }' changelog.md)
+          if ! grep -qx -- "- matchbox $MATCHBOX" <<< "$ENTRY"; then
+            echo "::error::The changelog entry doesn't list '- matchbox $MATCHBOX' (Dockerfile)"
+            exit 1
+          fi
+          if ! grep -qx -- "- ch.fhir.ig.ch-elm#$CHELM" <<< "$ENTRY"; then
+            echo "::error::The changelog entry doesn't list '- ch.fhir.ig.ch-elm#$CHELM' (src/ch.fhir.ig.ch-elm.tgz)"
+            exit 1
+          fi
+          if ! grep -q "ch.fhir.ig.ch-elm#$CHELM" src/application.yaml; then
+            echo "::error::src/application.yaml doesn't preload ch.fhir.ig.ch-elm#$CHELM"
+            exit 1
+          fi
+
+      - name: Extract the release notes from the changelog
+        env:
+          VERSION: ${{ inputs.version }}
+        run: |
+          # The entry is the lines after 'X.Y.Z YYYY/MM/DD' up to the next empty line
+          awk 'NR > 1 && NF == 0 { exit } NR > 1 { print }' changelog.md > release-notes.md
+          printf '\n```\ndocker pull europe-west6-docker.pkg.dev/ahdis-ch/ahdis/matchbox-ch-elm:%s\n```\n' \
+            "$VERSION" >> release-notes.md
+          PREVIOUS_TAG=$(git describe --tags --abbrev=0 HEAD 2> /dev/null || true)
+          if [ -n "$PREVIOUS_TAG" ]; then
+            printf '\n**Full Changelog**: %s/%s/compare/%s...%s\n' \
+              "$GITHUB_SERVER_URL" "$GITHUB_REPOSITORY" "$PREVIOUS_TAG" "$VERSION" >> release-notes.md
+          fi
+          cat release-notes.md
+
+      - name: Create the tag and the release
+        env:
+          VERSION: ${{ inputs.version }}
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          PRERELEASE=()
+          if [[ "$VERSION" == *-cibuild* ]]; then
+            PRERELEASE=(--prerelease)
+          fi
+          gh release create "$VERSION" \
+            --target "$GITHUB_SHA" \
+            --title "Release $VERSION" \
+            --notes-file release-notes.md \
+            "${PRERELEASE[@]}"
+
+      - name: Start the Docker workflow
+        env:
+          VERSION: ${{ inputs.version }}
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh workflow run googleregistry.yml --ref "$VERSION"
