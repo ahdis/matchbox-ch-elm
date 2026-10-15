@@ -19,6 +19,15 @@ after startup matchbox will be available at
 http://localhost:8080/matchboxv3/
 
 
+## Download image from the GitHub Container registry
+
+by `<ch-elm version>-<matchbox version>` or by ch-elm version (the latest build for it)
+
+```
+docker run -d --name matchbox-ch-elm -p 8080:80 ghcr.io/ahdis/matchbox-ch-elm:1.15.1-4.1.21
+docker run -d --name matchbox-ch-elm -p 8080:80 ghcr.io/ahdis/matchbox-ch-elm:1.15.1
+```
+
 ## Download image for google artifact registry
 
 ```
