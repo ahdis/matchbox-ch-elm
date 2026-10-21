@@ -1,15 +1,27 @@
 name: Create a release
 
-# Creates the tag and the GitHub release for a version with the notes of that version from changelog.md, then starts
-# the Docker image workflow on the new tag.
+# Makes a release from main: with a new matchbox and/or ch-elm version, it updates the files with
+# .github/scripts/prepare-release.sh, checks that the image builds and pushes the release commit to main. If the first
+# entry of changelog.md is already the version (the files were updated by hand), it releases main as it is.
+# Then it creates the tag and the GitHub release with the notes of the version from changelog.md and starts the Docker
+# image workflow on the new tag.
 # A tag created with the GITHUB_TOKEN doesn't trigger the 'push: tags' workflows, so it's dispatched explicitly.
 
 on:
   workflow_dispatch:
     inputs:
       version:
-        description: "Version to release (e.g. 1.15.6 or 1.16.0-cibuild2). Must be the first entry in changelog.md."
+        description: "Version to release (e.g. 1.15.7 or 1.16.0-cibuild2)"
         required: true
+        type: string
+      matchbox:
+        description: "New matchbox version (e.g. v4.1.22). Empty: unchanged"
+        type: string
+      chelm:
+        description: "New ch-elm version (e.g. 1.16.0) or 'cibuild'. Empty: unchanged"
+        type: string
+      note:
+        description: "Additional line for the changelog entry"
         type: string
       zulip:
         description: "Post the image to Zulip"
@@ -20,32 +32,63 @@ permissions:
   contents: write
   actions: write
 
+concurrency: release
+
+env:
+  VERSION: ${{ inputs.version }}
+
 jobs:
   release:
     name: Create the release
     runs-on: ubuntu-latest
 
     steps:
+      - name: Check the branch
+        if: github.ref != 'refs/heads/main'
+        run: |
+          echo "::error::Releases are made from main, not $GITHUB_REF_NAME"
+          exit 1
+
       - name: Checkout the repository
         uses: actions/checkout@v5
         with:
           fetch-depth: 0
 
-      - name: Check the version
+      - name: Update the versions
+        id: prepare
         env:
-          VERSION: ${{ inputs.version }}
+          MATCHBOX: ${{ inputs.matchbox }}
+          CHELM: ${{ inputs.chelm }}
+          NOTE: ${{ inputs.note }}
+        run: |
+          if git rev-parse -q --verify "refs/tags/$VERSION" > /dev/null; then
+            echo "::error::The tag $VERSION already exists"
+            exit 1
+          fi
+          if [ "$(awk 'NF { print $1; exit }' changelog.md)" = "$VERSION" ]; then
+            if [ -n "$MATCHBOX$CHELM$NOTE" ]; then
+              echo "::error::changelog.md already has $VERSION, leave matchbox, chelm and note empty to release main"
+              exit 1
+            fi
+            echo "::notice::changelog.md already has $VERSION, releasing main as it is"
+            echo "commit=false" >> "$GITHUB_OUTPUT"
+          else
+            .github/scripts/prepare-release.sh "$VERSION" "$MATCHBOX" "$CHELM" "$NOTE"
+            git diff
+            echo "commit=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Check the version
         run: |
           if ! [[ "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+(-cibuild[0-9]*)?$ ]]; then
             echo "::error::The version '$VERSION' isn't of the form X.Y.Z or X.Y.Z-cibuildN"
             exit 1
           fi
-          if git rev-parse -q --verify "refs/tags/$VERSION" > /dev/null; then
-            echo "::error::The tag $VERSION already exists"
-            exit 1
-          fi
-          CHANGELOG_VERSION=$(awk 'NF { print $1; exit }' changelog.md)
-          if [ "$CHANGELOG_VERSION" != "$VERSION" ]; then
-            echo "::error::The first entry in changelog.md is $CHANGELOG_VERSION, not $VERSION"
+          # A ch-elm ci-build is a -cibuild pre-release, so that the <ch-elm> image tag stays on the last stable image
+          VERSION_CIBUILD=$([[ "$VERSION" == *-cibuild* ]] && echo true || echo false)
+          PACKAGE_CIBUILD=$([[ "$(.github/scripts/version.sh)" == *-cibuild* ]] && echo true || echo false)
+          if [ "$VERSION_CIBUILD" != "$PACKAGE_CIBUILD" ]; then
+            echo "::error::A -cibuild version needs the ch-elm ci-build package and X.Y.Z a published one (chelm)"
             exit 1
           fi
           # The changelog entry must match the matchbox image and the ch-elm package that get built
@@ -60,14 +103,28 @@ jobs:
             echo "::error::The changelog entry doesn't list '- ch.fhir.ig.ch-elm#$CHELM' (src/ch.fhir.ig.ch-elm.tgz)"
             exit 1
           fi
-          if ! grep -q "ch.fhir.ig.ch-elm#$CHELM" src/application.yaml; then
-            echo "::error::src/application.yaml doesn't preload ch.fhir.ig.ch-elm#$CHELM"
+          CONFIGURED=$(yq '.hapi.fhir.implementationguides.chelm.version + " " + .matchbox.fhir.context.igsPreloaded' \
+            src/application.yaml)
+          if [ "$CONFIGURED" != "$CHELM ch.fhir.ig.ch-elm#$CHELM" ]; then
+            echo "::error::src/application.yaml doesn't install and preload ch-elm $CHELM (src/ch.fhir.ig.ch-elm.tgz)"
             exit 1
           fi
 
+      # The image build installs the IG, so this checks that matchbox loads the package before anything is published
+      - name: Build the image
+        if: steps.prepare.outputs.commit == 'true'
+        run: docker build --progress=plain -t matchbox-ch-elm .
+
+      - name: Commit and push to main
+        if: steps.prepare.outputs.commit == 'true'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add Dockerfile changelog.md README.md src/application.yaml src/ch.fhir.ig.ch-elm.tgz
+          git commit -m "$VERSION"
+          git push origin HEAD:main
+
       - name: Extract the release notes from the changelog
-        env:
-          VERSION: ${{ inputs.version }}
         run: |
           # The entry is the lines after 'X.Y.Z YYYY/MM/DD' up to the next empty line
           awk 'NR > 1 && NF == 0 { exit } NR > 1 { print }' changelog.md > release-notes.md
@@ -84,7 +141,6 @@ jobs:
 
       - name: Create the tag and the release
         env:
-          VERSION: ${{ inputs.version }}
           GH_TOKEN: ${{ github.token }}
         run: |
           PRERELEASE=()
@@ -92,14 +148,13 @@ jobs:
             PRERELEASE=(--prerelease)
           fi
           gh release create "$VERSION" \
-            --target "$GITHUB_SHA" \
+            --target "$(git rev-parse HEAD)" \
             --title "Release $VERSION" \
             --notes-file release-notes.md \
             "${PRERELEASE[@]}"
 
       - name: Start the Docker workflow
         env:
-          VERSION: ${{ inputs.version }}
           ZULIP: ${{ inputs.zulip }}
           GH_TOKEN: ${{ github.token }}
         run: |

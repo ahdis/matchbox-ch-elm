@@ -4,8 +4,13 @@ matchbox configured with ch-elm for validation
 
 ## how to install a new ch-elm ig or matchbox version
 
-See the release procedure in [`.claude/skills/release/SKILL.md`](.claude/skills/release/SKILL.md) (or ask Claude Code
-to make a release). You get a message on Zulip when the new matchbox-ch-elm image is available in the registry.
+Start the `Create a release` workflow (Actions → Create a release → Run workflow, on `main`) with the version and the
+new matchbox version (e.g. `v4.1.22`) and/or the new ch-elm version (e.g. `1.16.0`, or `cibuild` for the current
+ci-build). It updates the files, checks that the image builds, pushes the release commit to `main`, creates the release
+and builds the image. You get a message on Zulip when the new matchbox-ch-elm image is available in the registry.
+
+How to pick the version, and how to release by hand when `src/application.yaml` needs changes, is in
+[`.claude/skills/release/SKILL.md`](.claude/skills/release/SKILL.md) (or ask Claude Code to make a release).
 
 ## Build container for matchbox configured with ch-elm
 

@@ -1,23 +1,25 @@
 ---
 name: release
-description: Make a new matchbox-ch-elm release (e.g. 1.15.4) - update the matchbox base image and/or the ch-elm IG package, add the changelog entry, commit and push, run the release workflow (tag and GitHub release) and follow the Docker image build. Use when the user asks to release, cut or publish a new matchbox-ch-elm version, e.g. for a new matchbox or ch-elm version.
+description: Make a new matchbox-ch-elm release (e.g. 1.15.4) - pick the version, run the release workflow with the new matchbox and/or ch-elm version (it updates the files, pushes to main, tags and creates the GitHub release) and follow the Docker image build. Use when the user asks to release, cut or publish a new matchbox-ch-elm version, e.g. for a new matchbox or ch-elm version.
 ---
 
 # Making a matchbox-ch-elm release
 
 A release is a new combination of a matchbox version (the `FROM` image in `Dockerfile`) and a ch-elm IG version
-(`src/ch.fhir.ig.ch-elm.tgz`). It's a commit on `main` named after the version, then the `Create a release` workflow
-(`.github/workflows/release.yml`), which creates the tag with the bare version (no `v`) and the GitHub release with the
-notes of the version from `changelog.md` (a `-cibuild` version as a pre-release), and starts
-`.github/workflows/build.yml` on the tag. That builds the image (amd64 and arm64), pushes it as
-`ghcr.io/ahdis/matchbox-ch-elm:<tag>` (also as `<ch-elm>-<matchbox>` and `<ch-elm>`, see
+(`src/ch.fhir.ig.ch-elm.tgz`). The `Create a release` workflow (`.github/workflows/release.yml`), started on `main`
+with the version and the new matchbox and/or ch-elm version, does the whole release: it updates the files with
+`.github/scripts/prepare-release.sh` (`Dockerfile`, the package, `src/application.yaml`, `README.md` and the
+`changelog.md` entry), builds the image to check that the IG loads, pushes the commit named after the version to `main`,
+creates the tag with the bare version (no `v`) and the GitHub release with the notes from `changelog.md` (a `-cibuild`
+version as a pre-release), and starts `.github/workflows/build.yml` on the tag. That builds the image (amd64 and arm64),
+pushes it as `ghcr.io/ahdis/matchbox-ch-elm:<tag>` (also as `<ch-elm>-<matchbox>` and `<ch-elm>`, see
 `.github/scripts/version.sh`) and posts to Zulip. Up to `1.15.1-cibuild` the image was also pushed to Google Artifact
 Registry (`europe-west6-docker.pkg.dev/ahdis-ch/ahdis/matchbox-ch-elm`), newer versions are only on ghcr.io. There is
 no PR.
 
-The user asking for a release authorizes the whole procedure (commit and push to `main`, release workflow). Stop and
-ask if the version isn't obvious, if `main` has unexpected changes, or if a workflow fails. A tag is published at once:
-don't move or delete it, make a new patch release instead.
+The user asking for a release authorizes the whole procedure (release workflow, which pushes to `main`). Stop and ask
+if the version isn't obvious or if a workflow fails. A tag is published at once: don't move or delete it, make a new
+patch release instead.
 
 ## 1. Check the state and pick the version
 
@@ -39,77 +41,57 @@ The version follows the ch-elm IG version:
 - matchbox pre-release (e.g. `v5.0.0-rc1`): only with the ch-elm ci-build, as a `-cibuildN` version, so that it's a
   pre-release and the `<ch-elm>` tag on ghcr.io stays on the last stable image
 
-## 2. matchbox (if there is a new matchbox version)
+The workflow refuses a `-cibuild` version with a published package and an `X.Y.Z` version with a ci-build package. If
+`main` has a ci-build package, a stable release must set `chelm` to a published version.
 
 The matchbox release must have its Docker image (its `Build and Upload to Google Artifact registry` run in
-`ahdis/matchbox` completed). The matchbox base image is still taken from Google Artifact Registry:
+`ahdis/matchbox` completed), the workflow checks it. For a new major version check its release notes for changed or
+removed settings used in `src/application.yaml`; if the config needs changes, make the release by hand (step 3).
+
+## 2. Run the release workflow
 
 ```bash
-docker manifest inspect europe-west6-docker.pkg.dev/ahdis-ch/ahdis/matchbox:vX.Y.Z > /dev/null && echo ok
+gh workflow run release.yml --repo ahdis/matchbox-ch-elm --ref main -f version=1.15.7 -f matchbox=v4.1.22
+gh workflow run release.yml --repo ahdis/matchbox-ch-elm --ref main -f version=1.16.0 -f chelm=1.16.0
+gh workflow run release.yml --repo ahdis/matchbox-ch-elm --ref main -f version=1.16.0-cibuild -f chelm=cibuild
 ```
 
-(`gcloud.auth.docker-helper` errors about expired credentials can be ignored if it prints `ok`, the image is public.)
-Set the tag in the `FROM` line of `Dockerfile`. For a new major version check its release notes for changed or
-removed settings used in `src/application.yaml`, and build locally (step 5).
+Inputs: `version` (required), `matchbox` (tag, e.g. `v4.1.22`), `chelm` (version or `cibuild`), `note` (an additional
+line for the changelog entry, e.g. a config change) and `zulip` (default on). Empty `matchbox` / `chelm` keep the
+current version. If the workflow fails before "Commit and push to main", nothing is published: fix the cause and run
+it again.
 
-## 3. ch-elm (if there is a new IG version)
+## 3. Release by hand (config changes)
 
-1. Download the package to `src/ch.fhir.ig.ch-elm.tgz`:
-   - published: `curl -fsSL -o src/ch.fhir.ig.ch-elm.tgz https://fhir.ch/ig/ch-elm/<version>/package.tgz`
-   - ci-build: `curl -fsSL -o src/ch.fhir.ig.ch-elm.tgz https://build.fhir.org/ig/ahdis/ch-elm/package.tgz`
-2. Check the version in the package:
-   `tar -xOzf src/ch.fhir.ig.ch-elm.tgz package/package.json | grep '"version"'`
-3. Set it in **both** places of `src/application.yaml`: `hapi.fhir.implementationguides.chelm.version` and
-   `matchbox.fhir.context.igsPreloaded` (`ch.fhir.ig.ch-elm#<version>`).
-
-## 4. Changelog and README
-
-Add the entry at the top of `changelog.md` (date `YYYY/MM/DD`, followed by an empty line):
-
-```
-1.15.4 2026/09/30
-- matchbox v4.1.19
-- ch.fhir.ig.ch-elm#1.15.1
-
-```
-
-Set the new version in the `docker run` examples under "Download image" in `README.md` (not for a pre-release).
-
-## 5. Build locally (for a new IG version)
-
-The image build installs the IG, so a successful build confirms the package loads. Recommended for a new ch-elm
-package (it takes a few minutes), optional if only matchbox changes:
+When `src/application.yaml` or other files need changes beyond the versions, prepare the release locally (needs `jq`
+and `docker`), adjust the files, build, and commit only the release files (never `.DS_Store`, it's tracked and often
+modified):
 
 ```bash
+.github/scripts/prepare-release.sh 1.16.0 v5.0.0 1.16.0 "config for matchbox v5"
 docker build --progress=plain -t matchbox-ch-elm .
-```
-
-To try it: `docker run -d --name matchbox-ch-elm -p 8080:80 matchbox-ch-elm`, then http://localhost:8080/matchboxv3/.
-
-## 6. Commit, push and run the release workflow
-
-Commit only the release files, never `.DS_Store` (it's tracked and often modified). The commit message is the version:
-
-```bash
 git add Dockerfile changelog.md README.md src/application.yaml src/ch.fhir.ig.ch-elm.tgz
-git commit -m "1.15.4"
+git commit -m "1.16.0"
 git push origin main
-gh workflow run release.yml --repo ahdis/matchbox-ch-elm --ref main -f version=1.15.4
+gh workflow run release.yml --repo ahdis/matchbox-ch-elm --ref main -f version=1.16.0
 ```
 
-Don't tag by hand: the workflow checks that the version is the first entry of `changelog.md` and that the entry lists
-the matchbox version of the `Dockerfile` and the ch-elm version of the package (also preloaded in
-`src/application.yaml`), then creates the tag and the release. If it fails, fix `main` and run it again.
+When the first entry of `changelog.md` is already the version, the workflow only checks that the entry lists the
+matchbox version of the `Dockerfile` and the ch-elm version of the package (also preloaded in `src/application.yaml`)
+and releases `main` as it is. Don't tag by hand.
 
-## 7. Follow the release and the build
+To try an image locally: `docker run -d --name matchbox-ch-elm -p 8080:80 matchbox-ch-elm`, then
+http://localhost:8080/matchboxv3/.
+
+## 4. Follow the release and the build
 
 ```bash
 gh run list --repo ahdis/matchbox-ch-elm --limit 2               # 'Create a release', then the build on the tag
 gh run watch <id> --repo ahdis/matchbox-ch-elm --exit-status
-gh release view 1.15.4 --repo ahdis/matchbox-ch-elm
-docker manifest inspect ghcr.io/ahdis/matchbox-ch-elm:1.15.4 > /dev/null && echo ok
+gh release view 1.15.7 --repo ahdis/matchbox-ch-elm
+docker manifest inspect ghcr.io/ahdis/matchbox-ch-elm:1.15.7 > /dev/null && echo ok
 ```
 
-The build takes about 10–20 min. On success a message is posted to Zulip `#matchbox` (topic "new matchbox-ch-elm
-version published", with the link to the release), on failure to `#ahdis`. Report the version, its matchbox and ch-elm
-versions, the release URL and the image.
+The release workflow takes a few minutes (it builds the image once), the build on the tag about 10–20 min. On success
+a message is posted to Zulip `#matchbox` (topic "new matchbox-ch-elm version published", with the link to the release),
+on failure to `#ahdis`. Report the version, its matchbox and ch-elm versions, the release URL and the image.
