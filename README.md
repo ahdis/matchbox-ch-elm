@@ -21,8 +21,8 @@ registry.
 
 A release is named after its versions, `<ch-elm version>-<matchbox version>`, e.g. `1.15.1-4.1.22`. A ch-elm ci-build
 is named `<ch-elm version>-cibuild.<package date>-<matchbox version>`. Releases with a ch-elm ci-build or a matchbox
-pre-release (e.g. `v5.0.0-rc1`) are pre-releases. A rebuild of versions that are already released, e.g. for a config
-change or OS updates, gets `-r2`, `-r3`, … and needs a `note`.
+or ch-elm pre-release (e.g. `v5.0.0-rc1`) are pre-releases. A rebuild of versions that are already released, e.g. for
+a config change or OS updates, gets `-r2`, `-r3`, … and needs a `note`.
 
 New versions: [matchbox releases](https://github.com/ahdis/matchbox/releases) and the
 [ch-elm package list](https://fhir.ch/ig/ch-elm/package-list.json).
@@ -49,7 +49,7 @@ http://localhost:8080/matchboxv3/
 ## Download image from the GitHub Container registry
 
 by release, by `<ch-elm version>-<matchbox version>` (the latest build of it, including `-rN` rebuilds) or by ch-elm
-version (the latest build for it with a stable matchbox)
+version (its latest stable build)
 
 ```
 docker run -d --name matchbox-ch-elm -p 8080:80 ghcr.io/ahdis/matchbox-ch-elm:1.15.1-4.1.21
