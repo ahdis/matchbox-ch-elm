@@ -1,7 +1,9 @@
 #!/usr/bin/env bash
 # Prints the version of the image in the working tree: <ch-elm>-<matchbox> (e.g. 1.15.1-4.1.22), for a ch-elm
 # ci-build <ch-elm>-cibuild.<package date>-<matchbox>.
-# With --tags, also the tag of the latest build of it: <ch-elm>, for a ci-build <ch-elm>-cibuild-<matchbox>.
+# A release is named after it, a rebuild of the same versions gets -r2, -r3, ... (see prepare-release.sh).
+# With --tags, also the tag of the latest build of it: <ch-elm>, for a ci-build <ch-elm>-cibuild-<matchbox>, none
+# with a matchbox pre-release.
 set -euo pipefail
 cd "$(dirname "$0")/../.."
 
@@ -15,8 +17,13 @@ if [[ "$URL" == *build.fhir.org* ]]; then
   LATEST="$CHELM-cibuild-$MATCHBOX"
 else
   echo "$CHELM-$MATCHBOX"
-  LATEST=$CHELM
+  # The <ch-elm> tag stays on the last image with a stable matchbox
+  if [[ "$MATCHBOX" == *-* ]]; then
+    LATEST=
+  else
+    LATEST=$CHELM
+  fi
 fi
-if [ "${1:-}" = "--tags" ]; then
+if [ "${1:-}" = "--tags" ] && [ -n "$LATEST" ]; then
   echo "$LATEST"
 fi

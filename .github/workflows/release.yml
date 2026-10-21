@@ -1,19 +1,15 @@
 name: Create a release
 
-# Makes a release from main: with a new matchbox and/or ch-elm version, it updates the files with
-# .github/scripts/prepare-release.sh, checks that the image builds and pushes the release commit to main. If the first
-# entry of changelog.md is already the version (the files were updated by hand), it releases main as it is.
-# Then it creates the tag and the GitHub release with the notes of the version from changelog.md and starts the Docker
-# image workflow on the new tag.
+# Makes a release from main, named after its versions: <ch-elm>-<matchbox> (e.g. 1.15.1-4.1.22), for a rebuild of the
+# same versions -r2, -r3, ... (see .github/scripts/prepare-release.sh).
+# It updates the files to the new matchbox and/or ch-elm version, adds the changelog entry, checks that the image builds
+# and pushes the release commit to main. Then it creates the tag and the GitHub release with the notes from
+# changelog.md and starts the Docker image workflow on the new tag.
 # A tag created with the GITHUB_TOKEN doesn't trigger the 'push: tags' workflows, so it's dispatched explicitly.
 
 on:
   workflow_dispatch:
     inputs:
-      version:
-        description: "Version to release (e.g. 1.15.7 or 1.16.0-cibuild2)"
-        required: true
-        type: string
       matchbox:
         description: "New matchbox version (e.g. v4.1.22). Empty: unchanged"
         type: string
@@ -21,7 +17,7 @@ on:
         description: "New ch-elm version (e.g. 1.16.0) or 'cibuild'. Empty: unchanged"
         type: string
       note:
-        description: "Additional line for the changelog entry"
+        description: "Additional line for the changelog entry, required for a rebuild of the same versions"
         type: string
       zulip:
         description: "Post the image to Zulip"
@@ -33,9 +29,6 @@ permissions:
   actions: write
 
 concurrency: release
-
-env:
-  VERSION: ${{ inputs.version }}
 
 jobs:
   release:
@@ -52,6 +45,7 @@ jobs:
       - name: Checkout the repository
         uses: actions/checkout@v5
         with:
+          ref: main
           fetch-depth: 0
 
       - name: Update the versions
@@ -61,36 +55,17 @@ jobs:
           CHELM: ${{ inputs.chelm }}
           NOTE: ${{ inputs.note }}
         run: |
-          if git rev-parse -q --verify "refs/tags/$VERSION" > /dev/null; then
-            echo "::error::The tag $VERSION already exists"
-            exit 1
-          fi
-          if [ "$(awk 'NF { print $1; exit }' changelog.md)" = "$VERSION" ]; then
-            if [ -n "$MATCHBOX$CHELM$NOTE" ]; then
-              echo "::error::changelog.md already has $VERSION, leave matchbox, chelm and note empty to release main"
-              exit 1
-            fi
-            echo "::notice::changelog.md already has $VERSION, releasing main as it is"
+          VERSION=$(.github/scripts/prepare-release.sh "$MATCHBOX" "$CHELM" "$NOTE")
+          echo "VERSION=$VERSION" >> "$GITHUB_ENV"
+          git diff
+          if git diff --quiet; then
             echo "commit=false" >> "$GITHUB_OUTPUT"
           else
-            .github/scripts/prepare-release.sh "$VERSION" "$MATCHBOX" "$CHELM" "$NOTE"
-            git diff
             echo "commit=true" >> "$GITHUB_OUTPUT"
           fi
 
-      - name: Check the version
+      - name: Check the release
         run: |
-          if ! [[ "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+(-cibuild[0-9]*)?$ ]]; then
-            echo "::error::The version '$VERSION' isn't of the form X.Y.Z or X.Y.Z-cibuildN"
-            exit 1
-          fi
-          # A ch-elm ci-build is a -cibuild pre-release, so that the <ch-elm> image tag stays on the last stable image
-          VERSION_CIBUILD=$([[ "$VERSION" == *-cibuild* ]] && echo true || echo false)
-          PACKAGE_CIBUILD=$([[ "$(.github/scripts/version.sh)" == *-cibuild* ]] && echo true || echo false)
-          if [ "$VERSION_CIBUILD" != "$PACKAGE_CIBUILD" ]; then
-            echo "::error::A -cibuild version needs the ch-elm ci-build package and X.Y.Z a published one (chelm)"
-            exit 1
-          fi
           # The changelog entry must match the matchbox image and the ch-elm package that get built
           MATCHBOX=$(sed -n 's/^FROM .*matchbox:\(v[^ ]*\).*/\1/p' Dockerfile)
           CHELM=$(tar -xOzf src/ch.fhir.ig.ch-elm.tgz package/package.json | jq -r .version)
@@ -126,7 +101,7 @@ jobs:
 
       - name: Extract the release notes from the changelog
         run: |
-          # The entry is the lines after 'X.Y.Z YYYY/MM/DD' up to the next empty line
+          # The entry is the lines after '<version> YYYY/MM/DD' up to the next empty line
           awk 'NR > 1 && NF == 0 { exit } NR > 1 { print }' changelog.md > release-notes.md
           {
             printf '\n```\ndocker pull ghcr.io/%s:%s\n' "${GITHUB_REPOSITORY,,}" "$VERSION"
@@ -141,17 +116,18 @@ jobs:
 
       - name: Create the tag and the release
         env:
+          PRERELEASE: ${{ steps.prepare.outputs.prerelease }}
           GH_TOKEN: ${{ github.token }}
         run: |
-          PRERELEASE=()
-          if [[ "$VERSION" == *-cibuild* ]]; then
-            PRERELEASE=(--prerelease)
+          PRERELEASE_FLAG=()
+          if [ "$PRERELEASE" = true ]; then
+            PRERELEASE_FLAG=(--prerelease)
           fi
           gh release create "$VERSION" \
             --target "$(git rev-parse HEAD)" \
             --title "Release $VERSION" \
             --notes-file release-notes.md \
-            "${PRERELEASE[@]}"
+            "${PRERELEASE_FLAG[@]}"
 
       - name: Start the Docker workflow
         env:
