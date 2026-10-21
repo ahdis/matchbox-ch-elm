@@ -1,3 +1,8 @@
+1.15.1-cibuild2 2026/10/21
+- matchbox v5.0.0-rc1
+- ch.fhir.ig.ch-elm#1.15.1
+- the image is only published to ghcr.io, no longer to Google Artifact Registry
+
 1.15.1-cibuild 2026/10/16
 - matchbox v4.1.21
 - ch.fhir.ig.ch-elm#1.15.1

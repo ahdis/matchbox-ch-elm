@@ -28,9 +28,5 @@ docker run -d --name matchbox-ch-elm -p 8080:80 ghcr.io/ahdis/matchbox-ch-elm:1.
 docker run -d --name matchbox-ch-elm -p 8080:80 ghcr.io/ahdis/matchbox-ch-elm:1.15.1
 ```
 
-## Download image for google artifact registry
-
-```
-docker run -d --name matchbox-ch-elm -p 8080:80  europe-west6-docker.pkg.dev/ahdis-ch/ahdis/matchbox-ch-elm:1.15.6
-
-```
+Releases up to `1.15.1-cibuild` are also in the Google Artifact Registry
+(`europe-west6-docker.pkg.dev/ahdis-ch/ahdis/matchbox-ch-elm:<version>`), newer ones only on ghcr.io.

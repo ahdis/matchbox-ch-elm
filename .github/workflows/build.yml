@@ -1,15 +1,11 @@
 name: Build and publish the image
 
-# Pushes the image to ghcr.io and Google Artifact Registry and posts to Zulip. Started by hand, GAR and Zulip can be
-# turned off (inputs), on a pushed tag they are on.
+# Pushes the image to ghcr.io and posts to Zulip. Started by hand, Zulip can be turned off (input), on a pushed tag it
+# is on.
 
 on:
   workflow_dispatch:
     inputs:
-      gar:
-        description: "Also push to Google Artifact Registry"
-        type: boolean
-        default: true
       zulip:
         description: "Post to Zulip"
         type: boolean
@@ -19,11 +15,6 @@ on:
       - "*"
 
 env:
-  PROJECT_ID: ahdis-ch
-  GAR_LOCATION: europe-west6
-  REPOSITORY: ahdis
-  IMAGE: matchbox-ch-elm
-  GAR: ${{ github.event_name != 'workflow_dispatch' || inputs.gar }}
   ZULIP: ${{ github.event_name != 'workflow_dispatch' || inputs.zulip }}
 
 jobs:
@@ -34,7 +25,6 @@ jobs:
 
     permissions:
       contents: read
-      id-token: write
       packages: write
 
     steps:
@@ -46,21 +36,6 @@ jobs:
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v2
-
-      # Configure Workload Identity Federation and generate an access token.
-      - id: "auth"
-        name: "Authenticate to Google Cloud"
-        if: env.GAR == 'true'
-        uses: "google-github-actions/auth@v1"
-        with:
-          token_format: "access_token"
-          workload_identity_provider: "projects/1022310475153/locations/global/workloadIdentityPools/github-wif-pool/providers/oidc-github-provider"
-          service_account: "github@ahdis-ch.iam.gserviceaccount.com"
-
-      - name: Docker configuration
-        if: env.GAR == 'true'
-        run: |-
-          echo ${{steps.auth.outputs.access_token}} | docker login -u oauth2accesstoken --password-stdin https://$GAR_LOCATION-docker.pkg.dev
 
       - name: Log in to the GitHub Container registry
         uses: docker/login-action@v3
@@ -75,10 +50,7 @@ jobs:
           GHCR_IMAGE="ghcr.io/${GITHUB_REPOSITORY,,}"
           echo "GHCR_IMAGE=$GHCR_IMAGE" >> "$GITHUB_ENV"
           TAGS=(--tag "$GHCR_IMAGE:$GITHUB_REF_NAME")
-          if [ "$GAR" = "true" ]; then
-            TAGS+=(--tag "$GAR_LOCATION-docker.pkg.dev/$PROJECT_ID/$REPOSITORY/$IMAGE:$GITHUB_REF_NAME")
-          fi
-          # On ghcr.io also the version of the image and the tag of its latest build (see .github/scripts/version.sh)
+          # Also the version of the image and the tag of its latest build (see .github/scripts/version.sh)
           if [ "$GITHUB_REF_TYPE" = "tag" ]; then
             mapfile -t VERSION_TAGS < <(.github/scripts/version.sh --tags)
             for TAG in "${VERSION_TAGS[@]}"; do
@@ -94,7 +66,7 @@ jobs:
             --platform=linux/arm64,linux/amd64 \
             -f ./Dockerfile \
             .
-      
+
       - name: Send a stream message to Zulip
         if: env.ZULIP == 'true'
         uses: zulip/github-actions-zulip/send-message@v1
@@ -106,12 +78,11 @@ jobs:
           type: "stream"
           topic: "new matchbox-ch-elm version published"
           content: |
-              :rocket: ${{ env.REPOSITORY }}/${{ env.IMAGE }}:${{ github.ref_name }} published :rocket:
-              
-              see also https://github.com/ahdis/matchbox-ch-elm/releases/tag/${{ github.ref_name }}
-              
+              :rocket: ${{ github.repository }}:${{ github.ref_name }} published :rocket:
+
+              see also https://github.com/${{ github.repository }}/releases/tag/${{ github.ref_name }}
+
               docker pull ${{ env.GHCR_IMAGE }}:${{ github.ref_name }}
-              ${{ env.GAR == 'true' && format('docker pull {0}-docker.pkg.dev/{1}/{2}/{3}:{4}', env.GAR_LOCATION, env.PROJECT_ID, env.REPOSITORY, env.IMAGE, github.ref_name) || '' }}
 
       - name: Send a stream message to Zulip
         if: failure() && env.ZULIP == 'true'
@@ -124,6 +95,6 @@ jobs:
           type: "stream"
           topic: "failed publishing for matchbox-ch-elm"
           content: |
-              failure ${{ env.REPOSITORY }}/${{ env.IMAGE }}:${{ github.ref_name }} 
-              
-              see https://github.com/ahdis/matchbox-ch-elm/actions/runs/${{ github.run_id }}
+              failure ${{ github.repository }}:${{ github.ref_name }}
+
+              see https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}

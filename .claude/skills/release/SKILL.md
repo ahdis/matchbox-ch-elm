@@ -10,8 +10,10 @@ A release is a new combination of a matchbox version (the `FROM` image in `Docke
 (`.github/workflows/release.yml`), which creates the tag with the bare version (no `v`) and the GitHub release with the
 notes of the version from `changelog.md` (a `-cibuild` version as a pre-release), and starts
 `.github/workflows/build.yml` on the tag. That builds the image (amd64 and arm64), pushes it as
-`ghcr.io/ahdis/matchbox-ch-elm:<tag>` (also as `<ch-elm>-<matchbox>` and `<ch-elm>`) and
-`europe-west6-docker.pkg.dev/ahdis-ch/ahdis/matchbox-ch-elm:<tag>` and posts to Zulip. There is no PR.
+`ghcr.io/ahdis/matchbox-ch-elm:<tag>` (also as `<ch-elm>-<matchbox>` and `<ch-elm>`, see
+`.github/scripts/version.sh`) and posts to Zulip. Up to `1.15.1-cibuild` the image was also pushed to Google Artifact
+Registry (`europe-west6-docker.pkg.dev/ahdis-ch/ahdis/matchbox-ch-elm`), newer versions are only on ghcr.io. There is
+no PR.
 
 The user asking for a release authorizes the whole procedure (commit and push to `main`, release workflow). Stop and
 ask if the version isn't obvious, if `main` has unexpected changes, or if a workflow fails. A tag is published at once:
@@ -34,18 +36,21 @@ The version follows the ch-elm IG version:
 - only matchbox changes: the patch of the last release + 1 (e.g. `1.15.3` → `1.15.4`)
 - new ch-elm IG version: the IG version (e.g. ch-elm `1.16.0` → `1.16.0`)
 - ch-elm ci-build: `<ig-version>-cibuild`, `-cibuild2`, … (e.g. `1.15.0-cibuild2`)
+- matchbox pre-release (e.g. `v5.0.0-rc1`): only with the ch-elm ci-build, as a `-cibuildN` version, so that it's a
+  pre-release and the `<ch-elm>` tag on ghcr.io stays on the last stable image
 
 ## 2. matchbox (if there is a new matchbox version)
 
 The matchbox release must have its Docker image (its `Build and Upload to Google Artifact registry` run in
-`ahdis/matchbox` completed):
+`ahdis/matchbox` completed). The matchbox base image is still taken from Google Artifact Registry:
 
 ```bash
 docker manifest inspect europe-west6-docker.pkg.dev/ahdis-ch/ahdis/matchbox:vX.Y.Z > /dev/null && echo ok
 ```
 
 (`gcloud.auth.docker-helper` errors about expired credentials can be ignored if it prints `ok`, the image is public.)
-Set the tag in the `FROM` line of `Dockerfile`.
+Set the tag in the `FROM` line of `Dockerfile`. For a new major version check its release notes for changed or
+removed settings used in `src/application.yaml`, and build locally (step 5).
 
 ## 3. ch-elm (if there is a new IG version)
 
@@ -68,7 +73,7 @@ Add the entry at the top of `changelog.md` (date `YYYY/MM/DD`, followed by an em
 
 ```
 
-Set the new version in the `docker run` example under "Download image" in `README.md`.
+Set the new version in the `docker run` examples under "Download image" in `README.md` (not for a pre-release).
 
 ## 5. Build locally (for a new IG version)
 
@@ -102,7 +107,6 @@ the matchbox version of the `Dockerfile` and the ch-elm version of the package (
 gh run list --repo ahdis/matchbox-ch-elm --limit 2               # 'Create a release', then the build on the tag
 gh run watch <id> --repo ahdis/matchbox-ch-elm --exit-status
 gh release view 1.15.4 --repo ahdis/matchbox-ch-elm
-docker manifest inspect europe-west6-docker.pkg.dev/ahdis-ch/ahdis/matchbox-ch-elm:1.15.4 > /dev/null && echo ok
 docker manifest inspect ghcr.io/ahdis/matchbox-ch-elm:1.15.4 > /dev/null && echo ok
 ```
 
