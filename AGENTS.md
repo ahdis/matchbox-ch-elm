@@ -14,11 +14,16 @@ a release is a new combination of matchbox version and ch-elm IG version.
 | `src/ch.fhir.ig.ch-elm.tgz` | the ch-elm IG package that gets installed into the image |
 | `src/application.yaml` | matchbox config; the ch-elm version appears in **two** places (`hapi.fhir.implementationguides.chelm.version` and `matchbox.fhir.context.igsPreloaded`) |
 | `changelog.md` | release history, newest entry first |
-| `.github/workflows/release.yml` | `Create a release`, started by hand with a version: creates the tag and the GitHub release with the notes from `changelog.md`, then starts `build.yml` on the tag (passing the `zulip` option) |
+| `.github/workflows/release.yml` | `Create a release`, started by hand on `main`: prepares the release with `prepare-release.sh`, builds the image, pushes the release commit, creates the tag and the GitHub release and starts `build.yml` on the tag |
+| `.github/scripts/prepare-release.sh` | updates the files to a new matchbox and/or ch-elm version, names the release and adds the changelog entry |
 | `.github/workflows/build.yml` | on every pushed tag (or started by `release.yml`), builds the image (amd64 and arm64) and pushes it to `ghcr.io/ahdis/matchbox-ch-elm` as `<tag>` and the tags of `.github/scripts/version.sh --tags`, and posts to Zulip (`#matchbox`), unless `zulip` is turned off. Up to `1.15.1-cibuild` it also pushed to Google Artifact Registry |
-| `.github/scripts/version.sh` | prints the version of the image in the working tree (`<ch-elm>-<matchbox>`, for a ci-build `<ch-elm>-cibuild.<package date>-<matchbox>`), with `--tags` also the tag of its latest build |
+| `.github/scripts/version.sh` | reads the matchbox and ch-elm versions of the working tree: prints the release name, with `--tags` the image tags, with `--env` the versions and whether it's a pre-release |
 
 ## Release process
 
-The release procedure (version, matchbox and ch-elm update, changelog, release workflow, image build) is in the Claude Code skill
-[`.claude/skills/release/SKILL.md`](.claude/skills/release/SKILL.md). Follow it for a release.
+See "how to install a new ch-elm ig or matchbox version" in `README.md`. To follow a release:
+
+```bash
+gh run list --repo ahdis/matchbox-ch-elm --limit 2               # 'Create a release', then the build on the tag
+gh run watch <id> --repo ahdis/matchbox-ch-elm --exit-status
+```

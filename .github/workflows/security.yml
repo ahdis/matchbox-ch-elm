@@ -19,7 +19,7 @@ jobs:
 
     steps:
       - name: Checkout the repository
-        uses: actions/checkout@main
+        uses: actions/checkout@v7
 
       # We will scan the Matchbox image used in the Dockerfile with Trivy.
       # The Trivy scan is also enabled in Matchbox repository, but only for the latest version.
@@ -29,8 +29,9 @@ jobs:
         run: echo "image_name=$(awk '/FROM ([a-zA-Z0-9\.\-/:]+)/ { print $2 }' Dockerfile)" >> "$GITHUB_ENV"
 
       - name: Run Trivy vulnerability scanner in image mode
-        uses: aquasecurity/trivy-action@master
+        uses: aquasecurity/trivy-action@v0.36.0
         with:
+          version: 'v0.76.0'
           scan-type: 'image'
           image-ref: ${{ env.image_name }}
           ignore-unfixed: true
@@ -44,7 +45,7 @@ jobs:
           ACTIONS_RUNTIME_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Upload Trivy scan results to GitHub Security tab
-        uses: github/codeql-action/upload-sarif@main
+        uses: github/codeql-action/upload-sarif@v4
         if: always()
         with:
           sarif_file: 'trivy-results.sarif'
