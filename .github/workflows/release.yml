@@ -1,7 +1,8 @@
 name: Create a release
 
 # Updates the files to the new matchbox and/or ch-elm version (.github/scripts/prepare-release.sh), checks that the image
-# builds, pushes the release commit to main, creates the tag and the GitHub release and starts build.yml on the tag.
+# builds and that Trivy finds no HIGH or CRITICAL vulnerability with a fix in it, pushes the release commit to main,
+# creates the tag and the GitHub release and starts build.yml on the tag.
 # A tag created with the GITHUB_TOKEN doesn't trigger the 'push: tags' workflows, so it's dispatched explicitly.
 
 on:
@@ -60,6 +61,20 @@ jobs:
       - name: Build the image
         if: steps.prepare.outputs.commit == 'true'
         run: docker build --progress=plain -t matchbox-ch-elm .
+
+      - name: Scan the image with Trivy
+        if: steps.prepare.outputs.commit == 'true'
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
+        with:
+          version: 'v0.76.0'
+          scan-type: 'image'
+          image-ref: matchbox-ch-elm
+          ignore-unfixed: true
+          severity: 'CRITICAL,HIGH'
+          exit-code: '1'
+        env:
+          TRIVY_DB_REPOSITORY: ghcr.io/aquasecurity/trivy-db:2,public.ecr.aws/aquasecurity/trivy-db:2
+          TRIVY_JAVA_DB_REPOSITORY: ghcr.io/aquasecurity/trivy-java-db:1,public.ecr.aws/aquasecurity/trivy-db:1
 
       - name: Commit and push to main
         if: steps.prepare.outputs.commit == 'true'

@@ -1,6 +1,10 @@
 name: Security checks
 
+# Scans the Matchbox image of the Dockerfile on push, pull request and weekly, and the image of the last release on
+# ghcr.io weekly and when started by hand. The findings go to the Security tab. Started by hand, a finding fails the run.
+
 on:
+  workflow_dispatch:
   push:
     branches: [ "main" ]
   pull_request:
@@ -11,6 +15,7 @@ on:
 jobs:
   test-trivy:
     name: Analyze the Matchbox image with Trivy
+    if: github.event_name != 'workflow_dispatch'
     runs-on: ubuntu-latest
     permissions:
       actions: read
@@ -29,7 +34,7 @@ jobs:
         run: echo "image_name=$(awk '/FROM ([a-zA-Z0-9\.\-/:]+)/ { print $2 }' Dockerfile)" >> "$GITHUB_ENV"
 
       - name: Run Trivy vulnerability scanner in image mode
-        uses: aquasecurity/trivy-action@v0.36.0
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
         with:
           version: 'v0.76.0'
           scan-type: 'image'
@@ -38,6 +43,56 @@ jobs:
           format: 'sarif'
           output: 'trivy-results.sarif'
           severity: 'CRITICAL,HIGH'
+          limit-severities-for-sarif: true
+        env:
+          TRIVY_DB_REPOSITORY: ghcr.io/aquasecurity/trivy-db:2,public.ecr.aws/aquasecurity/trivy-db:2
+          TRIVY_JAVA_DB_REPOSITORY: ghcr.io/aquasecurity/trivy-java-db:1,public.ecr.aws/aquasecurity/trivy-db:1
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          ACTIONS_RUNTIME_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Upload Trivy scan results to GitHub Security tab
+        uses: github/codeql-action/upload-sarif@v4
+        if: always()
+        with:
+          sarif_file: 'trivy-results.sarif'
+
+  # Catches advisories published after the release
+  scan-release:
+    name: Analyze the released image with Trivy
+    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    permissions:
+      actions: read
+      contents: read
+      packages: read
+      security-events: write
+
+    steps:
+      - name: Checkout the repository
+        uses: actions/checkout@v7
+
+      - name: Get the image of the last release
+        run: echo "image_name=ghcr.io/${GITHUB_REPOSITORY,,}:$(.github/scripts/version.sh)" >> "$GITHUB_ENV"
+
+      - name: Log in to the GitHub Container registry
+        uses: docker/login-action@v4
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Run Trivy vulnerability scanner in image mode
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
+        with:
+          version: 'v0.76.0'
+          scan-type: 'image'
+          image-ref: ${{ env.image_name }}
+          ignore-unfixed: true
+          format: 'sarif'
+          output: 'trivy-results.sarif'
+          severity: 'CRITICAL,HIGH'
+          limit-severities-for-sarif: true
+          exit-code: ${{ github.event_name == 'workflow_dispatch' && '1' || '0' }}
         env:
           TRIVY_DB_REPOSITORY: ghcr.io/aquasecurity/trivy-db:2,public.ecr.aws/aquasecurity/trivy-db:2
           TRIVY_JAVA_DB_REPOSITORY: ghcr.io/aquasecurity/trivy-java-db:1,public.ecr.aws/aquasecurity/trivy-db:1
