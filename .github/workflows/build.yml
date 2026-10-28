@@ -75,9 +75,41 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
+  # The reusable workflow pushes the tags with the image, including the moving tag of the latest build, so this scan
+  # doesn't stop the publication. The gate for releases is the scan in release.yml, this one covers builds started by
+  # hand or by a pushed tag. A finding fails the run and the image isn't announced on Zulip.
+  scan:
+    name: Scan the image with Trivy
+    needs: [tags, build]
+    runs-on: ubuntu-latest
+
+    permissions:
+      packages: read
+
+    steps:
+      - name: Log in to the GitHub Container registry
+        uses: docker/login-action@v4
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Run Trivy vulnerability scanner in image mode
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
+        with:
+          version: 'v0.76.0'
+          scan-type: 'image'
+          image-ref: ${{ needs.tags.outputs.image }}@${{ needs.build.outputs.digest }}
+          ignore-unfixed: true
+          severity: 'CRITICAL,HIGH'
+          exit-code: '1'
+        env:
+          TRIVY_DB_REPOSITORY: ghcr.io/aquasecurity/trivy-db:2,public.ecr.aws/aquasecurity/trivy-db:2
+          TRIVY_JAVA_DB_REPOSITORY: ghcr.io/aquasecurity/trivy-java-db:1,public.ecr.aws/aquasecurity/trivy-db:1
+
   zulip:
     name: Post to Zulip
-    needs: [tags, build]
+    needs: [tags, build, scan]
     if: ${{ !cancelled() && (github.event_name != 'workflow_dispatch' || inputs.zulip) }}
     runs-on: ubuntu-latest
     environment: production
@@ -86,7 +118,7 @@ jobs:
 
     steps:
       - name: Send a stream message to Zulip
-        if: needs.build.result == 'success'
+        if: needs.build.result == 'success' && needs.scan.result == 'success'
         uses: zulip/github-actions-zulip/send-message@v2
         with:
           api-key: ${{ secrets.ZULIPAPIKEY }}
