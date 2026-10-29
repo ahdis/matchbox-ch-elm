@@ -1,4 +1,4 @@
-FROM europe-west6-docker.pkg.dev/ahdis-ch/ahdis/matchbox:v5.0.0-rc1
+FROM europe-west6-docker.pkg.dev/ahdis-ch/ahdis/matchbox:v5.0.0-rc2
 
 COPY ./src/application.yaml /config
 COPY ./src/*.tgz /
