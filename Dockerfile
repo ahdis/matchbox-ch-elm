@@ -16,4 +16,8 @@ RUN apt update && apt upgrade -y
 USER matchbox
 
 EXPOSE 80
+
+# The Matchbox image checks port 8080, this image runs on the port of src/application.yaml
+ENV HEALTHCHECK_URL=http://localhost:80/matchboxv3/actuator/health
+
 RUN java -Xmx3G -Xms1G -jar /matchbox.jar --hapi.fhir.only_install_packages=true
