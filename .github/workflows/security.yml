@@ -1,7 +1,8 @@
 name: Security checks
 
-# Scans the Matchbox image of the Dockerfile on push, pull request and weekly, and the image of the last release on
-# ghcr.io weekly and when started by hand. The findings go to the Security tab. Started by hand, a finding fails the run.
+# Scans the Matchbox image of the Dockerfile on push, pull request and daily, and the image of the last release on
+# ghcr.io daily and when started by hand. The findings go to the Security tab. A finding in the image of the last release
+# fails the run and is posted to Zulip, like a failure of that scan.
 
 on:
   workflow_dispatch:
@@ -10,7 +11,7 @@ on:
   pull_request:
     branches: [ "main" ]
   schedule:
-    - cron: '0 8 * * 1'
+    - cron: '0 8 * * *' # Every day at 8h00
 
 jobs:
   test-trivy:
@@ -67,12 +68,18 @@ jobs:
       packages: read
       security-events: write
 
+    outputs:
+      image: ${{ steps.release.outputs.image }}
+      findings: ${{ steps.findings.outputs.findings }}
+
     steps:
       - name: Checkout the repository
         uses: actions/checkout@v7
 
+      # The first entry of the changelog, .github/scripts/version.sh doesn't know the revision of a rebuild (-r2)
       - name: Get the image of the last release
-        run: echo "image_name=ghcr.io/${GITHUB_REPOSITORY,,}:$(.github/scripts/version.sh)" >> "$GITHUB_ENV"
+        id: release
+        run: echo "image=ghcr.io/${GITHUB_REPOSITORY,,}:$(awk 'NF { print $1; exit }' changelog.md)" >> "$GITHUB_OUTPUT"
 
       - name: Log in to the GitHub Container registry
         uses: docker/login-action@v4
@@ -86,13 +93,13 @@ jobs:
         with:
           version: 'v0.76.0'
           scan-type: 'image'
-          image-ref: ${{ env.image_name }}
+          image-ref: ${{ steps.release.outputs.image }}
           ignore-unfixed: true
           format: 'sarif'
           output: 'trivy-results.sarif'
           severity: 'CRITICAL,HIGH'
           limit-severities-for-sarif: true
-          exit-code: ${{ github.event_name == 'workflow_dispatch' && '1' || '0' }}
+          exit-code: '1'
         env:
           TRIVY_DB_REPOSITORY: ghcr.io/aquasecurity/trivy-db:2,public.ecr.aws/aquasecurity/trivy-db:2
           TRIVY_JAVA_DB_REPOSITORY: ghcr.io/aquasecurity/trivy-java-db:1,public.ecr.aws/aquasecurity/trivy-db:1
@@ -104,3 +111,34 @@ jobs:
         if: always()
         with:
           sarif_file: 'trivy-results.sarif'
+
+      - name: List the findings
+        id: findings
+        if: always()
+        run: |
+          FINDINGS=$(jq -r '[.runs[].results[].ruleId] | unique | join(" ")' trivy-results.sarif || true)
+          echo "findings=$FINDINGS" >> "$GITHUB_OUTPUT"
+
+  zulip:
+    name: Post to Zulip
+    needs: scan-release
+    if: ${{ failure() }}
+    runs-on: ubuntu-latest
+    environment: production
+
+    permissions: {}
+
+    steps:
+      - name: Send a stream message to Zulip
+        uses: zulip/github-actions-zulip/send-message@v2
+        with:
+          api-key: ${{ secrets.ZULIPAPIKEY }}
+          email: "ahdis-bot@chat.fhir.org"
+          organization-url: "https://chat.fhir.org"
+          to: "ahdis"
+          type: "stream"
+          topic: "matchbox-ch-elm image scan"
+          content: |
+              ${{ needs.scan-release.outputs.findings != '' && format('HIGH or CRITICAL vulnerabilities with a fix in {0}: {1}', needs.scan-release.outputs.image, needs.scan-release.outputs.findings) || 'the scan of the last release failed, without a list of findings' }}
+
+              see https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}
