@@ -1,3 +1,7 @@
+1.16.0-cibuild.20261125125959-5.0.0-rc6 2026/11/25
+- matchbox v5.0.0-rc6
+- ch.fhir.ig.ch-elm#1.16.0
+
 1.15.1-5.0.0-rc2 2026/10/30
 - matchbox v5.0.0-rc2
 - ch.fhir.ig.ch-elm#1.15.1
