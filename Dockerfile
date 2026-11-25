@@ -15,5 +15,5 @@ RUN apt update && apt upgrade -y
 # Switch back to the matchbox user
 USER matchbox
 
-EXPOSE 80
+EXPOSE 8080
 RUN java -Xmx3G -Xms1G -jar /matchbox.jar --hapi.fhir.only_install_packages=true

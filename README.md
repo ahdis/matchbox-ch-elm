@@ -38,7 +38,7 @@ Releases up to `1.15.1-cibuild2` used a separate version number (e.g. `1.15.6`).
 
 ```
 docker build --progress=plain -t matchbox-ch-elm .
-docker run -d --name matchbox-ch-elm -p 8080:80 matchbox-ch-elm
+docker run -d --name matchbox-ch-elm -p 8080:8080 matchbox-ch-elm
 docker logs matchbox-ch-elm --follow 
 ```
 
@@ -52,9 +52,11 @@ by release, by `<ch-elm version>-<matchbox version>` (the latest build of it, in
 version (its latest stable build)
 
 ```
-docker run -d --name matchbox-ch-elm -p 8080:80 ghcr.io/ahdis/matchbox-ch-elm:1.15.1-4.1.21
-docker run -d --name matchbox-ch-elm -p 8080:80 ghcr.io/ahdis/matchbox-ch-elm:1.15.1
+docker run -d --name matchbox-ch-elm -p 8080:8080 ghcr.io/ahdis/matchbox-ch-elm:1.15.1-4.1.21
+docker run -d --name matchbox-ch-elm -p 8080:8080 ghcr.io/ahdis/matchbox-ch-elm:1.15.1
 ```
+
+Images up to `1.15.1-5.0.0-rc2` listen on port 80 instead of 8080, run them with `-p 8080:80`.
 
 Releases up to `1.15.1-cibuild` are also in the Google Artifact Registry
 (`europe-west6-docker.pkg.dev/ahdis-ch/ahdis/matchbox-ch-elm:<version>`), newer ones only on ghcr.io.
